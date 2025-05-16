@@ -76,6 +76,11 @@ st.map(filtered_df[['lat', 'lon']])
 
 # --- Plot disease counts if there are results ---  
 st.header("Disease Counts")  
-if not filtered_df.empty:  
-    fig, ax = plt.subplots()  
-    filtered
+if not filtered_df.empty:
+    fig, ax = plt.subplots()
+    filtered_df['diseases'].value_counts().plot.bar(ax=ax)
+    ax.set_xlabel("Disease")
+    ax.set_ylabel("Count")
+    st.pyplot(fig)
+else:
+    st.write("No data to display for the selected filters.")
