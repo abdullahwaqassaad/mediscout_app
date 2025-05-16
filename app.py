@@ -59,7 +59,7 @@ if submit_button:
 
 # Filters
 selected_symptom = st.selectbox("Select Symptom", df['symptoms'].unique())
-age_range = st.slider("Select Age Range", min_value=int(df['age'].min()), max_value=int(df['age'].max()), value=(20, 60))
+age_range = st.slider("Select Age Range", min_value=int(df['age'].min()), max_value=int(df['age'].max()), value=(1, 120))
 selected_gender = st.selectbox("Select Gender", ['All'] + list(df['gender'].unique()))
 
 # Apply filters
