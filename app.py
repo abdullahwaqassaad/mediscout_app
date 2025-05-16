@@ -2,31 +2,41 @@ import streamlit as st
 import pandas as pd
 import os
 
-# --- Existing data load ---
-# df = pd.read_csv('your_data.csv')  # your data file
+# --- Load your main dataset ---
+# Replace 'your_data.csv' with your actual data file path
+@st.cache
+def load_data():
+    return pd.read_csv('your_data.csv')
 
-# --- Input on main page ---
-st.header("Enter your symptom or keyword")
-user_input = st.text_input("Keyword:")
+df = load_data()
 
+# --- User input section ---
+st.header("Search Symptoms or Keywords")
+user_input = st.text_input("Enter symptom or keyword:")
+
+# Save button
 if st.button("Save Input") and user_input:
-    # Save to CSV
-    if os.path.exists('user_data.csv'):
-        df_user = pd.read_csv('user_data.csv')
+    # Save user input to CSV
+    save_path = 'user_data.csv'
+    if os.path.exists(save_path):
+        df_user = pd.read_csv(save_path)
     else:
         df_user = pd.DataFrame(columns=['symptom'])
     df_user = df_user.append({'symptom': user_input}, ignore_index=True)
-    df_user.to_csv('user_data.csv', index=False)
-    st.success("Input saved!")
+    df_user.to_csv(save_path, index=False)
+    st.success("Your input has been saved!")
 
-# --- Filter your data ---
+# --- Filter data based on user input ---
 if user_input:
+    # Assuming your dataset has a column named 'symptoms'
     filtered_df = df[df['symptoms'].str.contains(user_input, case=False, na=False)]
 else:
     filtered_df = df
 
-# --- Continue with your existing features like maps, graphs, tables ---
-st.write("Filtered Data:")
+# --- Display filtered data ---
+st.subheader("Filtered Data")
 st.dataframe(filtered_df)
 
-# Your map or other visualization code here
+# --- Continue with your map, graph, or other visualizations ---
+# Example: Map or other visualizations using 'filtered_df'
+# st.map(filtered_df[['latitude', 'longitude']]) # Example if coordinates are available
