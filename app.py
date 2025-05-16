@@ -19,9 +19,12 @@ def save_user(username, password):
     users_df = load_users()
     if username in users_df['username'].values:
         return False
-    users_df = users_df.append({'username': username, 'password': password}, ignore_index=True)
+
+    new_user_df = pd.DataFrame([{'username': username, 'password': password}])
+    users_df = pd.concat([users_df, new_user_df], ignore_index=True)
     users_df.to_csv(USERS_FILE, index=False)
     return True
+
 
 def authenticate(username, password):
     users_df = load_users()
