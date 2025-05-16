@@ -13,7 +13,7 @@ data = {
         'Fatigue', 'Shortness of Breath', 'Muscle Pain', 'Dizziness', 'Runny Nose'  
     ],  
     'diseases': [  
-        'Malaria', 'Flu', 'Migraine', 'Pharyngitis', 'Gastroenteritis',  
+        'Malaria', 'Flu', 'Migraine', 'Phraryngitis', 'Gastroenteritis',  
         'Anemia', 'Asthma', 'Influenza', 'Vertigo', 'Common Cold'  
     ],  
     'lat': [25.0, 24.8, 25.2, 24.9, 25.1, 24.7, 25.3, 24.9, 25.0, 24.8],  
@@ -34,7 +34,7 @@ with st.sidebar.form(key='patient_form'):
     disease_input = st.text_input("Disease")  
     submit_button = st.form_submit_button("Add Patient Data")  
 
-# --- Handle form submission ---  
+# Handle form submission  
 if submit_button:  
     patient_data_path = 'patients.csv'  
     if os.path.exists(patient_data_path):  
@@ -56,16 +56,29 @@ if submit_button:
 
 # --- Filters ---  
 selected_symptom = st.selectbox("Select Symptom", df['symptoms'].unique())  
-age_min, age_max = int(df['age'].min()), int(df['age'].max())  
-age_range = st.slider("Select Age Range", min_value=age_min, max_value=age_max, value=(age_min, age_max))  
-selected_gender = st.selectbox("Select Gender", ['All'] + list(df['gender'].unique()))  
 
-# --- Apply filters ---  
+# Fixed age range from 1 to 120  
+age_min, age_max = 1, 120  
+age_range = st.slider(  
+    "Select Age Range",  
+    min_value=age_min,  
+    max_value=age_max,  
+    value=(age_min, age_max)  
+)  
+
+# Gender filter with 'Select'  
+selected_gender = st.selectbox(  
+    "Select Gender",  
+    ['Select'] + list(df['gender'].unique())  
+)  
+
+# --- Applying filters ---  
 filtered_df = df[df['symptoms'] == selected_symptom]  
 filtered_df = filtered_df[  
     (filtered_df['age'] >= age_range[0]) & (filtered_df['age'] <= age_range[1])  
 ]  
-if selected_gender != 'All':  
+
+if selected_gender != 'Select':  
     filtered_df = filtered_df[filtered_df['gender'] == selected_gender]  
 
 # --- Show filtered data ---  
@@ -74,13 +87,9 @@ st.write("Filtered Data:", filtered_df)
 # --- Map ---  
 st.map(filtered_df[['lat', 'lon']])  
 
-# --- Plot disease counts if there are results ---  
+# --- Plot disease counts if data exists ---  
 st.header("Disease Counts")  
-if not filtered_df.empty:
-    fig, ax = plt.subplots()
-    filtered_df['diseases'].value_counts().plot.bar(ax=ax)
-    ax.set_xlabel("Disease")
-    ax.set_ylabel("Count")
-    st.pyplot(fig)
-else:
-    st.write("No data to display for the selected filters.")
+if not filtered_df.empty:  
+    fig, ax = plt.subplots()  
+    filtered_df['diseases'].value_counts().plot.bar(ax=ax)  
+    ax.set
