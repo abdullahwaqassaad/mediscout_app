@@ -154,3 +154,6 @@ if not filtered_df.empty:
 else:
     # No data case
     st.write("No data to display for the selected filters.")
+# Continue with any additional visualizations or summaries if desired
+# For example, display the filtered data
+st.dataframe(filtered_df)
