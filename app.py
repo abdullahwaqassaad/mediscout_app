@@ -5,7 +5,7 @@ import os
 
 st.title("MediScout Pakistan Prototype")
 
-# --- Your sample dataset ---
+# --- Your existing dataset ---
 data = {
     'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     'symptoms': [
@@ -19,40 +19,68 @@ data = {
     'lat': [25.0, 24.8, 25.2, 24.9, 25.1, 24.7, 25.3, 24.9, 25.0, 24.8],
     'lon': [67.0, 67.2, 67.1, 67.3, 67.4, 67.2, 67.1, 67.3, 67.2, 67.4],
     'disease_flag': [1, 1, 1, 1, 1, 0, 0, 1, 0, 0],
-    'age': [25, 30, 45, 22, 60, 35, 40, 50, 29, 33],  # Age data
+    'age': [25, 30, 45, 22, 60, 35, 40, 50, 29, 33],
     'gender': ['Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female']
 }
 df = pd.DataFrame(data)
 
-# --- Add new data feature in the sidebar ---
+# --- Sidebar: Add new symptom/disease ---
 st.sidebar.header("Add New Symptom or Disease")
 new_symptom = st.sidebar.text_input("New Symptom")
 new_disease = st.sidebar.text_input("Associated Disease")
-# You can add more fields as needed
 
 if st.sidebar.button("Save New Data"):
-    # Save to a CSV or append to your data
-    save_path = 'your_data.csv'  # replace or set your data path
+    save_path = 'your_data.csv'
     if os.path.exists(save_path):
         df_existing = pd.read_csv(save_path)
     else:
-        # Simulate existing dataframe structure if file doesn't exist
         df_existing = df.copy()
 
-    # Append new data as a new row
     new_row = {
         'id': df_existing['id'].max() + 1,
         'symptoms': new_symptom,
         'diseases': new_disease,
-        'lat': 25.0,  # default or user input
-        'lon': 67.0,  # default or user input
+        'lat': 25.0,
+        'lon': 67.0,
         'disease_flag': 0,
-        'age': 30,    # default or user input
-        'gender': 'Male'  # default or user input
+        'age': 30,
+        'gender': 'Male'
     }
     df_existing = df_existing.append(new_row, ignore_index=True)
     df_existing.to_csv(save_path, index=False)
     st.sidebar.success("New symptom/disease data saved!")
+
+# --- Sidebar: Add new patient data with a form ---
+st.sidebar.header("Register New Patient")
+with st.sidebar.form("patient_form"):
+    name = st.text_input("Name")
+    age = st.number_input("Age", min_value=0, max_value=120)
+    gender = st.selectbox("Gender", ['Male', 'Female', 'Other'])
+    symptoms_input = st.text_input("Symptoms (comma separated)")
+    disease_input = st.text_input("Disease")
+    add_patient_btn = st.form_submit_button("Add Patient Data")
+
+if add_patient_btn:
+    # Append the new patient data to a CSV or DataFrame
+    # Here, for simplicity, we create or update a file called 'patients.csv'
+    patient_data_path = 'patients.csv'
+    if os.path.exists(patient_data_path):
+        patients_df = pd.read_csv(patient_data_path)
+    else:
+        # Define columns
+        patients_df = pd.DataFrame(columns=['name', 'age', 'gender', 'symptoms', 'disease'])
+
+    new_patient = {
+        'name': name,
+        'age': age,
+        'gender': gender,
+        'symptoms': symptoms_input,
+        'disease': disease_input
+    }
+
+    patients_df = patients_df.append(new_patient, ignore_index=True)
+    patients_df.to_csv(patient_data_path, index=False)
+    st.sidebar.success(f"Patient {name} data added!")
 
 # --- Filters ---
 selected_symptom = st.selectbox("Select Symptom", df['symptoms'].unique())
