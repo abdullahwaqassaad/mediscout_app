@@ -102,14 +102,15 @@ if st.session_state.show_form:
                 patients_df = pd.read_csv(PATIENT_FILE)
             else:
                 patients_df = pd.DataFrame(columns=['name', 'age', 'gender', 'symptoms', 'disease'])
-            new_patient = {
-                'name': name,
-                'age': age,
-                'gender': gender,
-                'symptoms': symptoms_input,
-                'disease': disease_input
-            }
-            patients_df = patients_df.append(new_patient, ignore_index=True)
+            new_patient_df = pd.DataFrame([{
+    'name': name,
+    'age': age,
+    'gender': gender,
+    'symptoms': symptoms_input,
+    'disease': disease_input
+}])
+patients_df = pd.concat([patients_df, new_patient_df], ignore_index=True)
+
             patients_df.to_csv(PATIENT_FILE, index=False)
             st.success(f"Patient {name} data added!")
 
