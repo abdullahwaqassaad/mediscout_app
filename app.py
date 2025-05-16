@@ -166,24 +166,56 @@ else:
 
 # ---- FILTERS ----
 st.header("📊 Filter Disease Data")
-symptom_filter = st.selectbox("Select Symptom", df_demo['symptoms'].unique())
-age_range = st.slider("Age Range", 1, 120, (1, 120))
-gender_filter = st.selectbox("Select Gender", ['Select'] + list(df_demo['gender'].unique()))
 
-filtered = df_demo[df_demo['symptoms'] == symptom_filter]
-filtered = filtered[(filtered['age'] >= age_range[0]) & (filtered['age'] <= age_range[1])]
-if gender_filter != 'Select':
-    filtered = filtered[filtered['gender'] == gender_filter]
+# Load patient data
+patients_df = load_patients()
 
-st.write("Filtered Data", filtered)
-st.map(filtered[['lat', 'lon']])
+if not patients_df.empty:
+    # Ensure required columns exist
+    required_cols = ['age', 'gender', 'symptoms', 'disease']
+    for col in required_cols:
+        if col not in patients_df.columns:
+            patients_df[col] = ""
 
-st.header("📈 Disease Counts")
-if not filtered.empty:
-    fig, ax = plt.subplots()
-    filtered['diseases'].value_counts().plot(kind='bar', ax=ax)
-    ax.set_xlabel("Disease")
-    ax.set_ylabel("Count")
-    st.pyplot(fig)
+    # Add lat/lon if not exist (simulate for now)
+    if 'lat' not in patients_df.columns:
+        patients_df['lat'] = [round(random.uniform(24.7, 25.3), 4) for _ in range(len(patients_df))]
+    if 'lon' not in patients_df.columns:
+        patients_df['lon'] = [round(random.uniform(67.0, 67.4), 4) for _ in range(len(patients_df))]
+
+    # Add disease_flag
+    if 'disease_flag' not in patients_df.columns:
+        patients_df['disease_flag'] = patients_df['disease'].apply(lambda x: 1 if pd.notna(x) and x.strip() != "" else 0)
+
+    # Rename for compatibility
+    patients_df.rename(columns={'disease': 'diseases'}, inplace=True)
+
+    # Filters
+    symptoms_unique = patients_df['symptoms'].dropna().unique()
+    if len(symptoms_unique) == 0:
+        st.info("No symptom data available.")
+    else:
+        selected_symptom = st.selectbox("Select Symptom", symptoms_unique)
+        age_range = st.slider("Select Age Range", 1, 120, (1, 120))
+        selected_gender = st.selectbox("Select Gender", ['Select'] + patients_df['gender'].dropna().unique().tolist())
+
+        # Apply filters
+        filtered_df = patients_df[patients_df['symptoms'] == selected_symptom]
+        filtered_df = filtered_df[(filtered_df['age'] >= age_range[0]) & (filtered_df['age'] <= age_range[1])]
+        if selected_gender != 'Select':
+            filtered_df = filtered_df[filtered_df['gender'] == selected_gender]
+
+        st.write("Filtered Data:", filtered_df)
+        st.map(filtered_df[['lat', 'lon']])
+
+        st.header("📈 Disease Counts")
+        if not filtered_df.empty:
+            fig, ax = plt.subplots()
+            filtered_df['diseases'].value_counts().plot(kind='bar', ax=ax)
+            ax.set_xlabel("Disease")
+            ax.set_ylabel("Count")
+            st.pyplot(fig)
+        else:
+            st.info("No data for selected filters.")
 else:
-    st.info("No data for selected filters.")
+    st.warning("No patient data available. Please add some records.")
