@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
 st.title("MediScout Pakistan Prototype")
 
-# Expanded dataset with 10 symptoms and diseases
+# Sample dataset with age and gender
 data = {
     'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     'symptoms': [
@@ -16,27 +17,39 @@ data = {
     ],
     'lat': [25.0, 24.8, 25.2, 24.9, 25.1, 24.7, 25.3, 24.9, 25.0, 24.8],
     'lon': [67.0, 67.2, 67.1, 67.3, 67.4, 67.2, 67.1, 67.3, 67.2, 67.4],
-    'disease_flag': [1, 1, 1, 1, 1, 0, 0, 1, 0, 0]
+    'disease_flag': [1, 1, 1, 1, 1, 0, 0, 1, 0, 0],
+    'age': [25, 30, 45, 22, 60, 35, 40, 50, 29, 33],  # Age data
+    'gender': ['Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female', 'Male', 'Female']
 }
 
 df = pd.DataFrame(data)
 
-# Unique options for filtering
-symptom_options = df['symptoms'].unique()
-disease_options = df['diseases'].unique()
+# Filters
+selected_symptom = st.selectbox("Select Symptom", df['symptoms'].unique())
 
-# User selections
-selected_symptom = st.selectbox("Select Symptom", symptom_options)
-selected_disease = st.selectbox("Select Disease", disease_options)
+# Additional filters for age and gender
+age_range = st.slider("Select Age Range", min_value=int(df['age'].min()), max_value=int(df['age'].max()), value=(20, 60))
+selected_gender = st.selectbox("Select Gender", ['All'] + list(df['gender'].unique()))
 
-# Filter data based on selections
-filtered_df = df[
-    (df['symptoms'] == selected_symptom) &
-    (df['diseases'] == selected_disease)
+# Apply filters
+filtered_df = df[df['symptoms'] == selected_symptom]
+filtered_df = filtered_df[
+    (filtered_df['age'] >= age_range[0]) & (filtered_df['age'] <= age_range[1])
 ]
+if selected_gender != 'All':
+    filtered_df = filtered_df[filtered_df['gender'] == selected_gender]
 
-# Show filtered data
+# Show data
 st.write("Filtered Data:", filtered_df)
 
-# Show locations on a map
+# Map
 st.map(filtered_df[['lat', 'lon']])
+
+# Plot: Count of diseases in filtered data
+st.header("Disease Counts")
+disease_counts = filtered_df['diseases'].value_counts()
+fig, ax = plt.subplots()
+disease_counts.plot.bar(ax=ax)
+ax.set_xlabel("Disease")
+ax.set_ylabel("Count")
+st.pyplot(fig)
