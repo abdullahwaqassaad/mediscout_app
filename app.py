@@ -135,18 +135,34 @@ if st.button("Search"):
     else:
         st.warning("No patient found.")
 
-# ---- DEMO DATA ----
-demo_data = {
-    'id': [1,2,3,4,5,6,7,8,9,10],
-    'symptoms': ['Fever','Cough','Headache','Sore Throat','Nausea','Fatigue','Shortness of Breath','Muscle Pain','Dizziness','Runny Nose'],
-    'diseases': ['Malaria','Flu','Migraine','Phraryngitis','Gastroenteritis','Anemia','Asthma','Influenza','Vertigo','Common Cold'],
-    'lat': [25.0,24.8,25.2,24.9,25.1,24.7,25.3,24.9,25.0,24.8],
-    'lon': [67.0,67.2,67.1,67.3,67.4,67.2,67.1,67.3,67.2,67.4],
-    'disease_flag': [1,1,1,1,1,0,0,1,0,0],
-    'age': [25,30,45,22,60,35,40,50,29,33],
-    'gender': ['Male','Female','Male','Female','Male','Female','Male','Female','Male','Female']
-}
-df_demo = pd.DataFrame(demo_data)
+import random
+
+# Load real patients instead of demo data
+patients_df = load_patients()
+
+# Only process if data exists
+if not patients_df.empty:
+    # Add missing fields for filtering and mapping
+    if 'lat' not in patients_df.columns:
+        patients_df['lat'] = [round(random.uniform(24.7, 25.3), 4) for _ in range(len(patients_df))]
+    if 'lon' not in patients_df.columns:
+        patients_df['lon'] = [round(random.uniform(67.0, 67.4), 4) for _ in range(len(patients_df))]
+    if 'disease_flag' not in patients_df.columns:
+        patients_df['disease_flag'] = patients_df['disease'].apply(lambda x: 1 if x else 0)
+
+    # Rename for compatibility with filters
+    patients_df.rename(columns={
+        'symptoms': 'symptoms',
+        'disease': 'diseases',
+        'age': 'age',
+        'gender': 'gender'
+    }, inplace=True)
+
+    df_demo = patients_df.copy()
+else:
+    st.warning("No patient data found. Please add some records.")
+    df_demo = pd.DataFrame()
+
 
 # ---- FILTERS ----
 st.header("📊 Filter Disease Data")
