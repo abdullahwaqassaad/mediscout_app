@@ -23,8 +23,13 @@ if 'show_form' not in st.session_state:
 def load_users():
     if os.path.exists(USERS_FILE):
         try:
-            return pd.read_csv(USERS_FILE)
-        except:
+            df = pd.read_csv(USERS_FILE)
+            # Ensure required columns
+            if 'username' not in df.columns or 'password' not in df.columns:
+                return pd.DataFrame(columns=['username', 'password'])
+            return df
+        except Exception as e:
+            st.error(f"Error loading users file: {e}")
             return pd.DataFrame(columns=['username', 'password'])
     else:
         return pd.DataFrame(columns=['username', 'password'])
@@ -50,14 +55,17 @@ if not st.session_state.logged_in:
     username = st.sidebar.text_input("Username")
     password = st.sidebar.text_input("Password", type="password")
 
-    if choice == 'Login':
-        if st.sidebar.button("Login"):
-            if authenticate(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.experimental_rerun()
-            else:
-                st.sidebar.error("Invalid username or password.")
+   if choice == 'Login':
+    if st.sidebar.button("Login"):
+        if username.strip() == "" or password.strip() == "":
+            st.sidebar.error("Please enter both username and password.")
+        elif authenticate(username, password):
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.experimental_rerun()
+        else:
+            st.sidebar.error("Invalid username or password.")
+
     else:
         if st.sidebar.button("Signup"):
             if save_user(username, password):
