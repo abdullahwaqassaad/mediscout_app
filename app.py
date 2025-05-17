@@ -65,13 +65,13 @@ if not st.session_state.logged_in:
             st.experimental_rerun()
         else:
             st.sidebar.error("Invalid username or password.")
+else:
+    if st.sidebar.button("Signup"):
+        if save_user(username, password):
+            st.sidebar.success("Signup successful. Please login.")
+        else:
+            st.sidebar.error("Username already exists.")
 
-    else:
-        if st.sidebar.button("Signup"):
-            if save_user(username, password):
-                st.sidebar.success("Signup successful. Please login.")
-            else:
-                st.sidebar.error("Username already exists.")
     st.stop()
 
 # ---- LOGGED IN USER ----
