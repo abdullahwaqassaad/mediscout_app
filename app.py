@@ -1,18 +1,12 @@
 import streamlit as st
 import pandas as pd
 import os
-import random
-import datetime
-from faker import Faker
 import matplotlib.pyplot as plt
 
 # ---- CONFIG ----
 st.set_page_config(page_title="MediScout Pakistan", layout="wide")
 USERS_FILE = 'users.csv'
 PATIENT_FILE = 'patients.csv'
-SIMULATION_FILE = 'simulation.csv'
-
-fake = Faker()
 
 # ---- SESSION STATE ----
 if 'logged_in' not in st.session_state:
@@ -21,8 +15,6 @@ if 'username' not in st.session_state:
     st.session_state.username = ""
 if 'show_form' not in st.session_state:
     st.session_state.show_form = False
-if 'show_simulation' not in st.session_state:
-    st.session_state.show_simulation = False
 
 # ---- USER MANAGEMENT FUNCTIONS ----
 def load_users():
@@ -91,69 +83,14 @@ def save_patient(new_patient):
     df = pd.concat([df, new_df], ignore_index=True)
     df.to_csv(PATIENT_FILE, index=False)
 
-# ---- SYNTHETIC DATA SIMULATION ----
-def simulate_health_data(num_records=50):
-    diseases = ['Dengue', 'Diarrhea', 'Stunting', 'Wasting', 'Tuberculosis', 'Hypertension', 'Diabetes', 'ARI']
-    simulation_data = []
-    start_date = datetime.date.today() - datetime.timedelta(days=60)
-    for _ in range(num_records):
-        age = random.randint(0, 80)
-        gender = random.choice(['Male', 'Female'])
-        date = start_date + datetime.timedelta(days=random.randint(0, 60))
-        fever = random.choices([True, False], weights=[25, 75])[0]  # 25% have fever
-        diarrhea = random.choices([True, False], weights=[39, 61])[0] if age < 5 else False
-        stunting = random.choices([True, False], weights=[38, 62])[0] if age < 5 else False
-        wasting = random.choices([True, False], weights=[17.7, 82.3])[0] if age < 5 else False
-        tb = random.choices([True, False], weights=[259, 999741])[0]
-        hypertension = random.choices([True, False], weights=[37.3, 62.7])[0] if 18 <= age <= 69 else False
-        diabetes = random.choices([True, False], weights=[31.4, 68.6])[0] if 18 <= age else False
-        ari = random.choices([True, False], weights=[75, 25])[0] if age < 5 else False
-        disease = random.choice(diseases) if fever or diarrhea or tb or hypertension or diabetes or ari else 'Healthy'
-
-        simulation_data.append({
-            'date': date,
-            'name': fake.name(),
-            'age': age,
-            'gender': gender,
-            'fever': fever,
-            'diarrhea': diarrhea,
-            'stunting': stunting,
-            'wasting': wasting,
-            'tb': tb,
-            'hypertension': hypertension,
-            'diabetes': diabetes,
-            'ari': ari,
-            'disease': disease
-        })
-
-    df = pd.DataFrame(simulation_data)
-    df.to_csv(SIMULATION_FILE, index=False)
-    return df
-
-def load_simulation():
-    if os.path.exists(SIMULATION_FILE):
-        return pd.read_csv(SIMULATION_FILE)
-    else:
-        return pd.DataFrame()
-
 # ---- MAIN UI ----
 st.title("🧠 MediScout Pakistan Prototype")
 
-# ---- Simulate Data ----
-if st.button("📊 Simulate Health Data"):
-    st.session_state.show_simulation = not st.session_state.show_simulation
-
-if st.session_state.show_simulation:
-    num_records = st.slider("Number of Records to Simulate", 10, 200, 50)
-    if st.button("Generate Data"):
-        simulated_data = simulate_health_data(num_records)
-        st.success(f"Simulated {num_records} community health observations.")
-        st.dataframe(simulated_data)
-
-# ---- Existing Features: Patient Registration ----
+# ---- Toggle Register Form ----
 if st.button("➕ Register New Patient"):
     st.session_state.show_form = not st.session_state.show_form
 
+# ---- Register New Patient ----
 if st.session_state.show_form:
     with st.form("patient_form"):
         st.subheader("Patient Registration Form")
@@ -174,10 +111,111 @@ if st.session_state.show_form:
             })
             st.success(f"Patient {name} added successfully!")
 
-# ---- Load Simulated Data ----
-st.subheader("📊 View Simulated Data")
-simulation_df = load_simulation()
-if not simulation_df.empty:
-    st.dataframe(simulation_df)
+# ---- DELETE PATIENT ----
+st.subheader("🗑️ Delete Patient Record")
+del_name = st.text_input("Enter name to delete")
+if st.button("Delete Patient"):
+    df = load_patients()
+    if del_name in df['name'].values:
+        df = df[df['name'] != del_name]
+        df.to_csv(PATIENT_FILE, index=False)
+        st.success(f"Deleted {del_name}")
+    else:
+        st.warning("Name not found.")
+
+# ---- SEARCH PATIENT ----
+st.subheader("🔍 Search Patient")
+search_name = st.text_input("Search by Name")
+if st.button("Search"):
+    df = load_patients()
+    record = df[df['name'].str.lower() == search_name.lower()]
+    if not record.empty:
+        st.success("Patient Found:")
+        st.dataframe(record)
+    else:
+        st.warning("No patient found.")
+
+import random
+
+# Load real patients instead of demo data
+patients_df = load_patients()
+
+# Only process if data exists
+if not patients_df.empty:
+    # Add missing fields for filtering and mapping
+    if 'lat' not in patients_df.columns:
+        patients_df['lat'] = [round(random.uniform(24.7, 25.3), 4) for _ in range(len(patients_df))]
+    if 'lon' not in patients_df.columns:
+        patients_df['lon'] = [round(random.uniform(67.0, 67.4), 4) for _ in range(len(patients_df))]
+    if 'disease_flag' not in patients_df.columns:
+        patients_df['disease_flag'] = patients_df['disease'].apply(lambda x: 1 if x else 0)
+
+    # Rename for compatibility with filters
+    patients_df.rename(columns={
+        'symptoms': 'symptoms',
+        'disease': 'diseases',
+        'age': 'age',
+        'gender': 'gender'
+    }, inplace=True)
+
+    df_demo = patients_df.copy()
 else:
-    st.warning("No simulated data available. Generate data to view.")
+    st.warning("No patient data found. Please add some records.")
+    df_demo = pd.DataFrame()
+
+
+# ---- FILTERS ----
+st.header("📊 Filter Disease Data")
+
+# Load patient data
+patients_df = load_patients()
+
+if not patients_df.empty:
+    # Ensure required columns exist
+    required_cols = ['age', 'gender', 'symptoms', 'disease']
+    for col in required_cols:
+        if col not in patients_df.columns:
+            patients_df[col] = ""
+
+    # Add lat/lon if not exist (simulate for now)
+    if 'lat' not in patients_df.columns:
+        patients_df['lat'] = [round(random.uniform(24.7, 25.3), 4) for _ in range(len(patients_df))]
+    if 'lon' not in patients_df.columns:
+        patients_df['lon'] = [round(random.uniform(67.0, 67.4), 4) for _ in range(len(patients_df))]
+
+    # Add disease_flag
+    if 'disease_flag' not in patients_df.columns:
+        patients_df['disease_flag'] = patients_df['disease'].apply(lambda x: 1 if pd.notna(x) and x.strip() != "" else 0)
+
+    # Rename for compatibility
+    patients_df.rename(columns={'disease': 'diseases'}, inplace=True)
+
+    # Filters
+    symptoms_unique = patients_df['symptoms'].dropna().unique()
+    if len(symptoms_unique) == 0:
+        st.info("No symptom data available.")
+    else:
+        selected_symptom = st.selectbox("Select Symptom", symptoms_unique)
+        age_range = st.slider("Select Age Range", 1, 120, (1, 120))
+        selected_gender = st.selectbox("Select Gender", ['Select'] + patients_df['gender'].dropna().unique().tolist())
+
+        # Apply filters
+        filtered_df = patients_df[patients_df['symptoms'] == selected_symptom]
+        filtered_df = filtered_df[(filtered_df['age'] >= age_range[0]) & (filtered_df['age'] <= age_range[1])]
+        if selected_gender != 'Select':
+            filtered_df = filtered_df[filtered_df['gender'] == selected_gender]
+
+        st.write("Filtered Data:", filtered_df)
+        st.map(filtered_df[['lat', 'lon']])
+
+        st.header("📈 Disease Counts")
+        if not filtered_df.empty:
+            fig, ax = plt.subplots()
+            filtered_df['diseases'].value_counts().plot(kind='bar', ax=ax)
+            ax.set_xlabel("Disease")
+            ax.set_ylabel("Count")
+            st.pyplot(fig)
+        else:
+            st.info("No data for selected filters.")
+else:
+    st.warning("No patient data available. Please add some records.")
