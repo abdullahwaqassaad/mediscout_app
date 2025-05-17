@@ -62,7 +62,7 @@ if not st.session_state.logged_in:
                 elif authenticate(username, password):
                     st.session_state.logged_in = True
                     st.session_state.username = username
-                    st.experimental_rerun()  # triggers app rerun after login
+                    st.experimental_rerun()  # this triggers app rerun after login
                 else:
                     st.sidebar.error("Invalid username or password.")
             except Exception as e:
@@ -70,9 +70,7 @@ if not st.session_state.logged_in:
 
     else:  # Signup
         if st.sidebar.button("Signup"):
-            if username.strip() == "" or password.strip() == "":
-                st.sidebar.error("Please enter both username and password.")
-            elif save_user(username, password):
+            if save_user(username, password):
                 st.sidebar.success("Signup successful. Please login.")
             else:
                 st.sidebar.error("Username already exists.")
