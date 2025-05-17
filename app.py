@@ -55,24 +55,24 @@ if not st.session_state.logged_in:
     username = st.sidebar.text_input("Username")
     password = st.sidebar.text_input("Password", type="password")
 
-   if choice == 'Login':
-    if st.sidebar.button("Login"):
-        if username.strip() == "" or password.strip() == "":
-            st.sidebar.error("Please enter both username and password.")
-        elif authenticate(username, password):
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.experimental_rerun()
-        else:
-            st.sidebar.error("Invalid username or password.")
-else:
-    if st.sidebar.button("Signup"):
-        if save_user(username, password):
-            st.sidebar.success("Signup successful. Please login.")
-        else:
-            st.sidebar.error("Username already exists.")
-
+    if choice == 'Login':
+        if st.sidebar.button("Login"):
+            if username.strip() == "" or password.strip() == "":
+                st.sidebar.error("Please enter both username and password.")
+            elif authenticate(username, password):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.experimental_rerun()
+            else:
+                st.sidebar.error("Invalid username or password.")
+    else:  # Signup
+        if st.sidebar.button("Signup"):
+            if save_user(username, password):
+                st.sidebar.success("Signup successful. Please login.")
+            else:
+                st.sidebar.error("Username already exists.")
     st.stop()
+
 
 # ---- LOGGED IN USER ----
 st.sidebar.success(f"Welcome, {st.session_state.username}")
