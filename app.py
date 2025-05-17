@@ -304,13 +304,39 @@ def generate_simulated_data(days=45, records_per_day=20):
 
 # ---- Simulated Data UI ----
 if st.button("📅 Simulate Data (30–60 Days)"):
-    sim_df = generate_simulated_data(days=np.random.randint(30, 61), records_per_day=20)
-    # Save simulated data as actual patient records
-    sim_df[['name', 'age', 'gender', 'symptoms', 'disease']].to_csv(PATIENT_FILE, index=False)
-    st.success("Simulated data saved to patient records.")
+    st.info("Generating synthetic patient data. Please wait...")
+    days_to_simulate = np.random.randint(30, 61)
+    sim_df = generate_simulated_data(days=days_to_simulate, records_per_day=20)
 
-    st.success("Synthetic health data generated successfully!")
+    # Load existing data
+    try:
+        existing_df = load_patients()
+    except Exception as e:
+        st.error(f"Failed to load existing patients: {e}")
+        existing_df = pd.DataFrame(columns=['name', 'age', 'gender', 'symptoms', 'disease'])
+
+    # Ensure all required columns exist
+    for col in ['name', 'age', 'gender', 'symptoms', 'disease']:
+        if col not in existing_df.columns:
+            existing_df[col] = ""
+
+    # Merge data
+    combined_df = pd.concat([
+        existing_df,
+        sim_df[['name', 'age', 'gender', 'symptoms', 'disease']]
+    ], ignore_index=True)
+
+    # Add random lat/lon for simulated patients if not present
+    if 'lat' not in combined_df.columns:
+        combined_df['lat'] = [round(random.uniform(24.7, 25.3), 4) for _ in range(len(combined_df))]
+    if 'lon' not in combined_df.columns:
+        combined_df['lon'] = [round(random.uniform(67.0, 67.4), 4) for _ in range(len(combined_df))]
+
+    combined_df.to_csv(PATIENT_FILE, index=False)
+
+    st.success(f"✅ {len(sim_df)} synthetic patient records generated and added.")
     st.dataframe(sim_df.head(50))
 
     csv = sim_df.to_csv(index=False).encode('utf-8')
-    st.download_button("⬇️ Download CSV", csv, "simulated_data.csv", "text/csv")
+    st.download_button("⬇️ Download Simulated CSV", csv, "simulated_data.csv", "text/csv")
+
