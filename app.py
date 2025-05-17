@@ -301,17 +301,16 @@ def generate_simulated_data(days=45, records_per_day=20):
     return sim_df
 
 # ---- Simulated Data UI ----
-st.header("🧪 Simulate Community Health Data")
-
 if st.button("📅 Simulate Data (30–60 Days)"):
     sim_df = generate_simulated_data(days=np.random.randint(30, 61), records_per_day=20)
     # Save simulated data as actual patient records
-sim_df[['name', 'age', 'gender', 'symptoms', 'disease']].to_csv(PATIENT_FILE, index=False)
-st.success("Simulated data saved to patient records.")
+    sim_df[['name', 'age', 'gender', 'symptoms', 'disease']].to_csv(PATIENT_FILE, index=False)
+    st.success("Simulated data saved to patient records.")
 
     st.success("Synthetic health data generated successfully!")
     st.dataframe(sim_df.head(50))
 
     csv = sim_df.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Download CSV", csv, "simulated_data.csv", "text/csv")
+
 
