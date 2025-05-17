@@ -304,21 +304,19 @@ def generate_simulated_data(days=45, records_per_day=20):
 
 # ---- Simulated Data UI ----
 if st.button("📅 Simulate Data (30–60 Days)"):
-    st.info("Generating synthetic patient data. Please wait...")
-    days_to_simulate = np.random.randint(30, 61)
-    sim_df = generate_simulated_data(days=days_to_simulate, records_per_day=20)
+    sim_df = generate_simulated_data(days=np.random.randint(30, 61), records_per_day=20)
+    # Save simulated data as actual patient records
+    sim_df[['name', 'age', 'gender', 'symptoms', 'disease']].to_csv(PATIENT_FILE, index=False)
 
-    # Load existing data
-    try:
-        existing_df = load_patients()
-    except Exception as e:
-        st.error(f"Failed to load existing patients: {e}")
-        existing_df = pd.DataFrame(columns=['name', 'age', 'gender', 'symptoms', 'disease'])
+    st.success("Simulated data saved to patient records.")
+    st.dataframe(sim_df.head(50))
 
-    # Ensure all required columns exist
-    for col in ['name', 'age', 'gender', 'symptoms', 'disease']:
-        if col not in existing_df.columns:
-            existing_df[col] = ""
+    csv = sim_df.to_csv(index=False).encode('utf-8')
+    st.download_button("⬇️ Download CSV", csv, "simulated_data.csv", "text/csv")
+
+    st.session_state.show_form = False  # Optional: hide form
+    st.experimental_rerun()  # ✅ Refresh app to load new data
+
 
     # Merge data
     combined_df = pd.concat([
