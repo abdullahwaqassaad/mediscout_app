@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime, timedelta
 
-
 # ---- CONFIG ----
 st.set_page_config(page_title="MediScout Pakistan", layout="wide")
 USERS_FILE = 'users.csv'
@@ -57,22 +56,27 @@ if not st.session_state.logged_in:
 
     if choice == 'Login':
         if st.sidebar.button("Login"):
-            if username.strip() == "" or password.strip() == "":
-                st.sidebar.error("Please enter both username and password.")
-            elif authenticate(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.experimental_rerun()
-            else:
-                st.sidebar.error("Invalid username or password.")
+            try:
+                if username.strip() == "" or password.strip() == "":
+                    st.sidebar.error("Please enter both username and password.")
+                elif authenticate(username, password):
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.experimental_rerun()  # triggers app rerun after login
+                else:
+                    st.sidebar.error("Invalid username or password.")
+            except Exception as e:
+                st.sidebar.error(f"Unexpected error during login: {e}")
+
     else:  # Signup
         if st.sidebar.button("Signup"):
-            if save_user(username, password):
+            if username.strip() == "" or password.strip() == "":
+                st.sidebar.error("Please enter both username and password.")
+            elif save_user(username, password):
                 st.sidebar.success("Signup successful. Please login.")
             else:
                 st.sidebar.error("Username already exists.")
     st.stop()
-
 
 # ---- LOGGED IN USER ----
 st.sidebar.success(f"Welcome, {st.session_state.username}")
@@ -174,7 +178,6 @@ else:
     st.warning("No patient data found. Please add some records.")
     df_demo = pd.DataFrame()
 
-
 # ---- FILTERS ----
 st.header("📊 Filter Disease Data")
 
@@ -201,7 +204,7 @@ if not patients_df.empty:
     # Rename for compatibility
     patients_df.rename(columns={'disease': 'diseases'}, inplace=True)
 
-    # Filters
+    # Filters UI
     symptoms_unique = patients_df['symptoms'].dropna().unique()
     if len(symptoms_unique) == 0:
         st.info("No symptom data available.")
@@ -230,7 +233,8 @@ if not patients_df.empty:
             st.info("No data for selected filters.")
 else:
     st.warning("No patient data available. Please add some records.")
-    # ---- Simulated Data Constants ----
+
+# ---- Simulated Data Constants ----
 SIM_FILE = 'simulated_data.csv'
 
 def generate_simulated_data(days=45, records_per_day=20):
@@ -312,5 +316,3 @@ if st.button("📅 Simulate Data (30–60 Days)"):
 
     csv = sim_df.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Download CSV", csv, "simulated_data.csv", "text/csv")
-
-
