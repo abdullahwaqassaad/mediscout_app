@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime, timedelta
+
 
 # ---- CONFIG ----
 st.set_page_config(page_title="MediScout Pakistan", layout="wide")
@@ -219,3 +222,84 @@ if not patients_df.empty:
             st.info("No data for selected filters.")
 else:
     st.warning("No patient data available. Please add some records.")
+    # ---- Simulated Data Constants ----
+SIM_FILE = 'simulated_data.csv'
+
+def generate_simulated_data(days=45, records_per_day=20):
+    simulated = []
+    genders = ['Male', 'Female']
+    
+    for day_offset in range(days):
+        date = (datetime.now() - timedelta(days=day_offset)).strftime('%Y-%m-%d')
+        for _ in range(records_per_day):
+            age = np.random.randint(0, 80)
+            gender = np.random.choice(genders)
+            temp = round(np.random.normal(37, 0.7), 1)
+
+            disease = ""
+            symptoms = []
+
+            # Monsoon fever (25%)
+            if np.random.rand() < 0.25:
+                temp = round(np.random.uniform(38.0, 40.0), 1)
+                disease = "Fever"
+                symptoms = ["High Fever", "Body Aches", "Chills"]
+
+            if age < 5:
+                if np.random.rand() < 0.39:
+                    disease = "Diarrhea"
+                    symptoms = ["Loose stools", "Dehydration"]
+                if np.random.rand() < 0.38:
+                    disease = "Stunting"
+                    symptoms.append("Poor Growth")
+                if np.random.rand() < 0.177:
+                    disease = "Wasting"
+                    symptoms.append("Thin appearance")
+                if np.random.rand() < 0.75:
+                    disease = "ARI"
+                    symptoms = ["Cough", "Difficulty Breathing", "Fever"]
+
+            if np.random.rand() < 0.0026:
+                disease = "TB"
+                symptoms = ["Chronic Cough", "Weight Loss", "Fever"]
+
+            if 18 <= age <= 40 and gender == 'Female' and np.random.rand() < 0.1:
+                disease = "Pregnancy Complication"
+                symptoms = ["Abdominal Pain", "Fever", "Vomiting"]
+
+            if age >= 18 and np.random.rand() < 0.373:
+                disease = "Hypertension"
+                symptoms = ["High BP", "Headache"]
+
+            if age >= 18 and np.random.rand() < 0.314:
+                disease = "Diabetes"
+                symptoms = ["Increased thirst", "Frequent urination"]
+
+            immunized = "Yes" if age <= 2 and np.random.rand() < 0.66 else "No"
+
+            simulated.append({
+                "date": date,
+                "name": f"SimUser_{np.random.randint(1000,9999)}",
+                "age": age,
+                "gender": gender,
+                "temperature_C": temp,
+                "symptoms": ", ".join(symptoms),
+                "disease": disease,
+                "immunized": immunized
+            })
+
+    sim_df = pd.DataFrame(simulated)
+    sim_df.to_csv(SIM_FILE, index=False)
+    return sim_df
+
+# ---- Simulated Data UI ----
+st.header("🧪 Simulate Community Health Data")
+
+if st.button("📅 Simulate Data (30–60 Days)"):
+    sim_df = generate_simulated_data(days=np.random.randint(30, 61), records_per_day=20)
+    st.success("Synthetic health data generated successfully!")
+    st.dataframe(sim_df.head(50))
+
+    csv = sim_df.to_csv(index=False).encode('utf-8')
+    st.download_button("⬇️ Download CSV", csv, "simulated_data.csv", "text/csv")
+
